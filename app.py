@@ -4,8 +4,13 @@ import os
 import json
 from flask import Flask, request, jsonify
 import hashlib
+from aws_lambda_powertools import Logger, Tracer
 
 app = Flask(__name__)
+
+# Initialize Logger and Tracer for AWS CodeGuru Profiler
+logger = Logger()
+tracer = Tracer()
 
 # Vulnerable global variable (potential sensitive data exposure)
 SECRET_KEY = "my_secret_key"
@@ -49,6 +54,12 @@ def eval_code():
         return jsonify({'result': result}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@app.route('/some_route', methods=['GET'])
+@tracer.capture_method  # Capturing profiling data for this method
+def some_method():
+    logger.info("Some method has been called")  # Log information
+    return jsonify({'message': 'Hello, World!'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
